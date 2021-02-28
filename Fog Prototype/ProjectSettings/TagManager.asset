@@ -3,7 +3,14 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - Trap
+  - Metaball_liquid
+  - checkP1
+  - checkP2
+  - Enemy
+  - Switch
+  - checkP3
   layers:
   - Default
   - TransparentFX
@@ -13,8 +20,8 @@ TagManager:
   - UI
   - 
   - 
-  - 
-  - 
+  - ground
+  - Ice
   - 
   - 
   - 
