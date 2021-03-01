@@ -92,6 +92,7 @@ public class PlayerMovement : MonoBehaviour
       Input.GetButtonDown("Jump") && (IsGrounded() || timeCheck < 0.2f) &&
       cam.orthographicSize == 10f &&
        !(rb.constraints == (RigidbodyConstraints2D.FreezePositionX | RigidbodyConstraints2D.FreezeRotation))){
+
       rb.velocity = new Vector2(rb.velocity.x, jumpForce);
       stepOnEnemy = false;
       jumpCount++;
