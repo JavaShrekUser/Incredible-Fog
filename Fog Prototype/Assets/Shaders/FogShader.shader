@@ -1,56 +1,90 @@
-﻿Shader "Shaders/FogShader"
+Shader"Shaders/FirstShader"
 {
-    Properties
-    {
-        _Color ("Color", Color) = (1,1,1,1)
-        _MainTex ("Albedo (RGB)", 2D) = "white" {}
-        _Glossiness ("Smoothness", Range(0,1)) = 0.5
-        _Metallic ("Metallic", Range(0,1)) = 0.0
-        _Alpha("Alpha", Range(0,1)) = 0.0
+  Properties
+  {
+    _Color("My Custom Color", Color) = (1,1,1,1)
+    _redSlider("Red", Range (0, 1)) = 0
+    _greenSlider("Green", Range (0, 1)) = 0
+    _blueSlider("Blue", Range (0, 1)) = 0
+    _alphaSlider("Alpha", Range (0, 1)) = 0
 
-    }
-    SubShader
-    {
-        Tags {"Queue" = "Transparent" "RenderType" = "Transparent" }
-        LOD 200
+  }
+  SubShader
+  {
+    Tags
+		{
+			"Queue" = "Transparent"
+		}
+
+		Pass
+		{
+			Cull Off
+			ZWrite Off
+			Blend SrcAlpha OneMinusSrcAlpha // standard alpha blending
 
         CGPROGRAM
-        // Physically based Standard lighting model, and enable shadows on all light types
-        #pragma surface surf Standard fullforwardshadows alpha//:fade
+        #pragma vertex vert
+        #pragma fragment frag
 
-        // Use shader model 3.0 target, to get nicer looking lighting
-        #pragma target 3.0
+        #include "UnityCG.cginc"
 
-        sampler2D _MainTex;
-        float _Alpha;
+        float4 _Color;
+        float _redSlider;
+        float _greenSlider;
+        float _blueSlider;
+        float _alphaSlider;
 
-        struct Input
+
+        struct VertexShaderInput
         {
-            float2 uv_MainTex;
+          float4 vertex   : POSITION;
+          float3 normal   : NORMAL;
+          float2 uv       : TEXCOORD0;
+          float3 vertexPos: TEXCOORD2;
+          float4 scrPos   : TEXCOORD3;
         };
 
-        half _Glossiness;
-        half _Metallic;
-        fixed4 _Color;
-
-        // Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
-        // See https://docs.unity3d.com/Manual/GPUInstancing.html for more information about instancing.
-        // #pragma instancing_options assumeuniformscaling
-        UNITY_INSTANCING_BUFFER_START(Props)
-            // put more per-instance properties here
-        UNITY_INSTANCING_BUFFER_END(Props)
-
-        void surf (Input IN, inout SurfaceOutputStandard o)
+        struct VertexShaderOutput
         {
-            // Albedo comes from a texture tinted by color
-            fixed4 c = tex2D (_MainTex, IN.uv_MainTex) * _Color;
-            o.Albedo = c.rgb;
-            // Metallic and smoothness come from slider variables
-            o.Metallic = _Metallic;
-            o.Smoothness = _Glossiness;
-            o.Alpha = _Alpha;
+          float4 pos: SV_POSITION;
+          float2 uv : TEXCOORD0;
+          float3 normal: TEXCOORD1;
+          float3 vertexPos: TEXCOORD2;
+          float4 scrPos   : TEXCOORD3;
+          float4 ro       : TEXCOORD4;
+        };
+
+        VertexShaderOutput vert(VertexShaderInput v)
+        {
+          VertexShaderOutput o;
+
+          o.pos = UnityObjectToClipPos(v.vertex);
+          o.uv = v.uv;
+          o.normal = UnityObjectToWorldNormal(v.normal);
+          o.vertexPos = (mul(unity_ObjectToWorld, v.vertex));
+          o.scrPos = ComputeScreenPos(v.vertex);
+
+          return o;
         }
+        float4 frag(VertexShaderOutput i):COLOR
+        {
+          float4 output;
+          output = _Color;
+          float3 P = i.vertexPos;
+          float3 L = normalize(_WorldSpaceLightPos0.xyz);
+          float3 N = normalize(i.normal);
+          float3 V = normalize(_WorldSpaceCameraPos - P);
+          float3 H = normalize(L + V);
+          float2 screenPosition = (i.scrPos.xy/i.scrPos.w);
+
+          float3 refraction = refract(V,N,0.5);
+
+          output.rgb = float3(refraction);
+          output.a = 0.2;
+          return output;
+        }
+
         ENDCG
-    }
-    FallBack "Diffuse"
+      }
+  }
 }
