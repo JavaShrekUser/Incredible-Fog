@@ -72,9 +72,6 @@ public class PlayerMovement : MonoBehaviour
     //check for if crouch is pressed
     IsCrouching();
 
-    //animation detection for if crouching
-    animator.SetBool("crouchAnimation", crouching);
-
     //if so, change the collision mask
     if(crouching == true)
     {

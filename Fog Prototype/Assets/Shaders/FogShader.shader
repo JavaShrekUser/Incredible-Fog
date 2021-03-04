@@ -2,11 +2,7 @@ Shader"Shaders/FirstShader"
 {
   Properties
   {
-    _Color("My Custom Color", Color) = (1,1,1,1)
-    _redSlider("Red", Range (0, 1)) = 0
-    _greenSlider("Green", Range (0, 1)) = 0
-    _blueSlider("Blue", Range (0, 1)) = 0
-    _alphaSlider("Alpha", Range (0, 1)) = 0
+    _Color("Fog Color", Color) = (1,1,1,1)
 
   }
   SubShader
@@ -61,8 +57,7 @@ Shader"Shaders/FirstShader"
           o.pos = UnityObjectToClipPos(v.vertex);
           o.uv = v.uv;
           o.normal = UnityObjectToWorldNormal(v.normal);
-          o.vertexPos = (mul(unity_ObjectToWorld, v.vertex));
-          o.scrPos = ComputeScreenPos(v.vertex);
+          o.vertexPos = (mul(unity_ObjectToWorld, v.vertex)).xyz;
 
           return o;
         }
@@ -75,12 +70,14 @@ Shader"Shaders/FirstShader"
           float3 N = normalize(i.normal);
           float3 V = normalize(_WorldSpaceCameraPos - P);
           float3 H = normalize(L + V);
-          float2 screenPosition = (i.scrPos.xy/i.scrPos.w);
 
-          float3 refraction = refract(V,N,0.5);
+          half3 refraction = refract(-V,N,1.5);
+          half3 reflection = reflect(-V, N);
+          float4 final = UNITY_SAMPLE_TEXCUBE(unity_SpecCube0, refraction);
+          half3 skyColor = DecodeHDR (final, unity_SpecCube0_HDR);
 
-          output.rgb = float3(refraction);
-          output.a = 0.2;
+          output.rgb = skyColor + _Color.rgb;
+          output.a = _Color.a;
           return output;
         }
 
