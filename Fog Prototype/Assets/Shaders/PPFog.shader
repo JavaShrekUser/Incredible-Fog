@@ -4,11 +4,10 @@
   {
       _MainTex ("Texture", 2D) = "white" {}
       [MaterialToggle]_Invert  ("Invert", Float) = 0
-      [MaterialToggle]_Distort ("Distort", Float) = 0
+      [MaterialToggle]_Distort ("Fog", Float) = 0
       _Brightness ("Brightness", Range(0,1)) = 1
       _Saturation ("Saturation", Range(0,1)) = 1
       _Contrast ("Contrast", Range(0,1)) = 1
-      _Size  ("Distort Amount", Range(0,50)) = 3
       _Density("Fog Density", float) = 1
       _Color ("Fog Color", Color) = (1,1,1,1)
 
@@ -36,7 +35,6 @@
           float _Brightness;
           float _Saturation;
           float _Contrast;
-          float _Size;
           float _Density;
           float4 _Color;
 
@@ -93,7 +91,7 @@
 
     			float fbm(float2 x)
     			{
-    				float scale = log(_Density);
+    				float scale = _Density;
     				float res = 0;
     				float w = 4;
     				for(int i=0; i<4; ++i)
@@ -114,13 +112,6 @@
               float3 V = normalize(_WorldSpaceCameraPos - P);
               float3 H = normalize(L + V);
 
-              // GAUSSIAN BLUR SETTINGS {{{
-              float Directions = 16.0; // BLUR DIRECTIONS
-              float Quality = 10.0; // BLUR QUALITY
-              float Size = _Size; // BLUR SIZE
-              float Pi = 6.28318530718; // Pi*2
-              // GAUSSIAN BLUR SETTINGS }}}
-
               fixed4 col = tex2D(_MainTex, i.uv);
 
 
@@ -129,25 +120,13 @@
                 col.rgb = 1 - col.rgb;
               }
               if(_Distort == 1){
-                //float2 Radius = Size/_ScreenParams.xy;
-                //for( float d=0.0; d<Pi; d+=Pi/Directions)
-                //{
-                //for(float j=1.0/50; j<=1.0; j+=1.0/Quality)
-                    //{
-                        //col += tex2D( _MainTex, i.uv+float2(cos(d),sin(d))*Radius*j);
-                  //  }
-              //  }
-              //  col /= Quality * Directions - 15.0;
-                col += float4(tex2D( _MainTex, i.uv+0.005).rgb, 0.1);
+                col += float4(tex2D( _MainTex, i.uv+(cos(_Time)*0.005)).rgb, 0.1);
                 float rd = fbm(i.uv + _Time.x);
                 float3 col_fog = {rd,rd,rd};
                 col_fog *= _Color;
                 col.rgb = lerp(col.rgb, col_fog,0.1);
-
+                col.rgb*=0.3;
               }
-
-
-
 
               col.rgb = col.rgb * _Brightness;
               float grey = (col.r + col.b + col.g)/3;
