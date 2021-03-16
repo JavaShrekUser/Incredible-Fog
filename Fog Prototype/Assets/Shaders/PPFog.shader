@@ -5,11 +5,15 @@
       _MainTex ("Texture", 2D) = "white" {}
       [MaterialToggle]_Invert  ("Invert", Float) = 0
       [MaterialToggle]_Distort ("Fog", Float) = 0
+      [MaterialToggle]_Rain ("Rain", Float) = 0
       _Brightness ("Brightness", Range(0,1)) = 1
       _Saturation ("Saturation", Range(0,1)) = 1
       _Contrast ("Contrast", Range(0,1)) = 1
+      _DistAmount("Distortion Amount", Range(0,10)) = 1
       _Density("Fog Density", float) = 1
       _Color ("Fog Color", Color) = (1,1,1,1)
+      _RainDropSize ("Size of RainDrops", float) = 1
+      _Blur ("Rain Blur amount", float) = 1
 
   }
   SubShader
@@ -26,6 +30,7 @@
           CGPROGRAM
           #pragma vertex vert
           #pragma fragment frag
+          #define S(a,b,t) smoothstep(a,b,t)
 
           #include "UnityCG.cginc"
 
@@ -37,6 +42,10 @@
           float _Contrast;
           float _Density;
           float4 _Color;
+          float _DistAmount;
+          float _Rain;
+          float _RainDropSize;
+          float _Blur;
 
           struct VertexShaderInput
           {
@@ -102,6 +111,46 @@
     				return res * scale;
     			}
 
+          float N21(float2 p){
+            p = frac(p*float2(123.34, 345.45));
+            p += dot(p, p+34.345);
+            return frac(p.x*p.y);
+          }
+          float3 Layer(float2 UV, float t){
+            float2 aspect = float2(3, 2);
+            float2 uv = UV*_RainDropSize*aspect;
+            uv.y += t * .25;
+            float2 gv = frac(uv)-.5;
+            float2 id = floor(uv);
+
+            float n = N21(id);
+            t+= n*6.2831;
+
+            float w = UV.y * 10;
+            float x = (n-.5)*.8;
+            x += (.4-abs(x)) * sin(3*w) * pow(sin(w),6)*0.45;
+
+            float y = -sin(t+sin(t+sin(t)*0.5))*0.45;
+            y -= (gv.x-x)*(gv.x-x);
+
+            float2 dropPos = (gv-float2(x,y))/aspect;
+            float drop = S(.05, .03, length(dropPos));
+
+            float2 trailPos = (gv-float2(x, t*.25))/aspect;
+            trailPos.y = (frac(trailPos.y * 8)-.5)/8;
+            float trail = S(.03, .01, length(trailPos));
+
+            float fogtrail = S(-.05, 0.05, dropPos.y);
+            fogtrail *= S(.5, y, gv.y);
+            trail *= fogtrail;
+
+            fogtrail *= S(0.05, .04, abs(dropPos.x));
+
+
+            float2 offs = drop * dropPos + trail * trailPos;
+
+            return float3(offs, fogtrail);
+          }
 
           float4 frag(VertexShaderOutput i):COLOR
           {
@@ -114,19 +163,43 @@
 
               fixed4 col = tex2D(_MainTex, i.uv);
 
+              if(_Rain == 1){
+                float t = fmod(_Time.y, 7200);
+
+                float3 drops = Layer(i.uv, t);
+                drops += Layer(i.uv*1.23+7.54, t);
+                drops += Layer(i.uv*1.35+1.54, t);
+                drops += Layer(i.uv*1.57-7.54, t);
+
+                float blur = _Blur * 7 * (1-drops.z);
+                blur *=.01;
+                const float numSamples = 16;
+                float a = N21(i.uv)*6.2831;
+                for(float j = 0; j< numSamples; j++){
+                  float2 offs = float2(sin(a), cos(a))*blur;
+                  offs *= frac(sin((j+1)*546)*524);
+                  col += tex2D(_MainTex, i.uv+offs);
+                  a++;
+                }
+                col /= numSamples;
+                col += tex2D(_MainTex, i.uv+drops.xy*-7);
+                col *= 0.4;
+              }
+
 
               // just invert the colors
               if(_Invert == 1){
                 col.rgb = 1 - col.rgb;
               }
               if(_Distort == 1){
-                col += float4(tex2D( _MainTex, i.uv+(cos(_Time)*0.005)).rgb, 0.1);
+                col += float4(tex2D( _MainTex, i.uv+(cos(_Time)*0.005*_DistAmount)).rgb, 0.1);
                 float rd = fbm(i.uv + _Time.x);
                 float3 col_fog = {rd,rd,rd};
                 col_fog *= _Color;
                 col.rgb = lerp(col.rgb, col_fog,0.1);
                 col.rgb*=0.3;
               }
+
 
               col.rgb = col.rgb * _Brightness;
               float grey = (col.r + col.b + col.g)/3;

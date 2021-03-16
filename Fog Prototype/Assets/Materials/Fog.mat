@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: Fog
   m_Shader: {fileID: 4800000, guid: 4b425f5b4310f4a1284f4b1835dcb6b3, type: 3}
-  m_ShaderKeywords: ETC1_EXTERNAL_ALPHA _ALPHAPREMULTIPLY_ON _DISTORT_ON
+  m_ShaderKeywords: ETC1_EXTERNAL_ALPHA _ALPHAPREMULTIPLY_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -77,14 +77,15 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _Alpha: 0
-    - _Blur: 0
+    - _Blur: -5.59
     - _Brightness: 1
     - _BumpScale: 1
     - _Contrast: 1
     - _Cutoff: 0.5
     - _Density: 19.6
     - _DetailNormalMapScale: 1
-    - _Distort: 1
+    - _DistAmount: 1
+    - _Distort: 0
     - _DstBlend: 10
     - _EdgeThickness: 1
     - _GlossMapScale: 1
@@ -96,6 +97,8 @@ Material:
     - _Mode: 3
     - _OcclusionStrength: 1
     - _Parallax: 0.02
+    - _Rain: 0
+    - _RainDropSize: 4.3
     - _Roughness: 0
     - _Saturation: 1
     - _Size: 0
@@ -109,7 +112,7 @@ Material:
     - _greenSlider: 0.308
     - _redSlider: 0.585
     m_Colors:
-    - _Color: {r: 0.16981131, g: 0.16981131, b: 0.16981131, a: 0.39607844}
+    - _Color: {r: 0.16981131, g: 0.16981131, b: 0.16981131, a: 1}
     - _EdgeColor: {r: 0, g: 0, b: 0, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecularColor: {r: 1, g: 1, b: 1, a: 1}
